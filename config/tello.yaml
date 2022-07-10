@@ -1,0 +1,26 @@
+# tello_ai_ros config
+
+# tello onboard camera frame shape
+tello_frame:
+  w: 720
+  h: 960
+  d: 3
+
+# my computer webcam shape
+# if you want to test the face_detector_node via computer webcam
+camera_frame:
+  w: 480
+  h: 640
+  d: 3
+
+# pixel values for goal state
+goal:
+  x: 0
+  y: 0
+  z: 40
+
+# regions of interest (face_landmarks nose, left_eye, right_eye)
+roi:
+  nose: 4
+  eye_l: 145
+  eye_r: 374

@@ -1,0 +1,10 @@
+pip install:
+
+mediapipe
+opencv-python
+djitellopy
+
+
+services:
+http://wiki.ros.org/ROS/Tutorials/CreatingMsgAndSrv#Creating_a_srv
+http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28python%29

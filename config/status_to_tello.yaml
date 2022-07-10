@@ -1,0 +1,17 @@
+# Joystick Inputs für Twist-Message (4 DOF)
+
+inputs:
+  linear:
+    x: axis_left_y
+    y: -axis_left_x
+    z: axis_right_y
+  angular:
+    z: axis_r2 - axis_l2
+    
+scales:
+  linear:
+    x: 100
+    y: 100
+    z: 100
+  angular:
+    z: 100
