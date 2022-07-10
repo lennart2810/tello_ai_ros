@@ -21,6 +21,7 @@ class TelloNode(object):
         rospy.init_node('tello_node', anonymous=False)
         self.pub = rospy.Publisher('/tello_view', Image, queue_size=10)
         rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback, queue_size=1)
+        self.prev_cmd_vel = Twist()
         rospy.Service('tello_button_service', tello_service, self.handle_tello_service)
 
         self.mode = mode
@@ -63,12 +64,17 @@ class TelloNode(object):
     def cmd_vel_callback(self, msg):
 
         if self.mode == 'normal':
-            pass
-            # check if tello is "onAir" and can execute Twist Commands
+            cmd_vel = Twist()
+            cmd_vel.linear.x = int(msg.linear.x)
+            cmd_vel.linear.y = int(msg.linear.y)
+            cmd_vel.linear.z = int(msg.linear.z)
+            cmd_vel.angular.z = int(msg.angular.z)
             
-            # control the tello via Twist Command 
-            # self.tello.send_rc_control(msg.linear.y, msg.linear.x, msg.linear.z, msg.angular.z)
+            self.tello.send_rc_control(cmd_vel.linear.y, cmd_vel.linear.x, cmd_vel.linear.z, cmd_vel.angular.z)
 
+        self.prev_cmd_vel = msg
+            
+            
     def print_debug_info(self):
         
         text = "Battery: {}%".format(self.tello.get_battery())
@@ -77,18 +83,27 @@ class TelloNode(object):
         #rospy.loginfo(text)
 
     def handle_tello_service(self, req):
-        if req.up == True:
-            print('up')
-            if self.mode == 'normal':
+        
+        if self.mode == 'normal':
+
+            if req.up == True:
+                self.tello.flip_forward()
+            elif req.down == True:
+                self.tello.flip_back()
+            elif req.left == True:
+                self.tello.flip_left()
+            elif req.right == True:
+                self.tello.flip_right()
+
+            elif req.cross == True:
                 self.tello.takeoff()
-        elif req.down == True:
-            print('down')
-            if self.mode == 'normal':
+            elif req.circle == True:
                 self.tello.land()
-        elif req.left == True:
-            print('left')
-        elif req.right == True:
-            print('rigth')
+            elif req.triangle == True:
+                print('triangle')
+            elif req.rectangle == True:
+                print('square')
+        
         return tello_serviceResponse('ok')
 
 

@@ -8,13 +8,13 @@ from cv_bridge import CvBridge
 import numpy as np
 from FaceDetectorClass import FaceDetector
 
-class FaceDetectorNode(object):
+class DetectorNode(object):
     def __init__(self, view):
  
         # init node, publisher and subscriber
-        rospy.init_node('face_detector_node', anonymous=False)
+        rospy.init_node('detector_node', anonymous=False)
         rospy.Subscriber('/tello_view', Image, self.frame_callback, queue_size=1)
-        self.pub_detection = rospy.Publisher('/face_detection', Image, queue_size=1)
+        self.pub_detection = rospy.Publisher('/view_detection', Image, queue_size=1)
         self.pub_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
         # read params from tello.yaml
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     view = sys.argv[1]
 
     try:
-        FaceDetectorNode(view)
+        DetectorNode(view)
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

@@ -54,10 +54,12 @@ class StatusToTello(object):
         
         # print(self.tello_service_request_template)
 
+        self.req_msg_template = tello_serviceRequest(False, False, False, False, False, False, False, False, False, False)
+
         # /cmd_vel
-        self.vel_msg = Twist
+        #self.vel_msg = Twist
         self.pub_vel_flag = True
-        self.pub_vel = rospy.Publisher('cmd_vel', self.vel_msg, queue_size=1)
+        self.pub_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
         # /set_feedback
         self.feedback = Feedback()
@@ -84,44 +86,52 @@ class StatusToTello(object):
         else:
             self.feedback.led_flash_off = 0
 
-    def cb_button(self, status):
+
+    def cb_button(self, msg):
         # detect change in button status
         for attr in self.button_attrs:
-            if getattr(status, attr) is not getattr(self.prev_status, attr): # flag in button status detected
-                if getattr(status, attr) == True: # positive flag in one button status detected
+            if getattr(msg, attr) is not getattr(self.prev_status, attr): # flag in button status detected
+                if getattr(msg, attr) == True: # positive flag in one button status detected
                     
                     # prepare service call
                     rospy.wait_for_service('tello_button_service')
                     request = rospy.ServiceProxy('tello_button_service', tello_service)
-                    req_msg = tello_serviceRequest(False, False, False, False)
-                    response = ''
+                    req_msg = self.req_msg_template
 
                     try:
                         if attr == 'button_dpad_up':
                             req_msg.up = True
-                            response = request(req_msg)
                         elif attr == 'button_dpad_down':
                             req_msg.down = True
-                            response = request(req_msg)
                         elif attr == 'button_dpad_left':
                             req_msg.left = True
-                            response = request(req_msg)
                         elif attr == 'button_dpad_right':
                             req_msg.right = True
-                            response = request(req_msg)
+
+                        elif attr == 'button_cross':
+                            req_msg.cross = True
+                        elif attr == 'button_circle':
+                            req_msg.circle = True
+                        elif attr == 'button_triangle':
+                            req_msg.triangle = True
+                        elif attr == 'button_square':
+                            req_msg.square = True
 
                         # buttons without service call
-                        elif attr == 'button_trackpad':
-                            rospy.loginfo("Battery: %s %%", ( status.battery_percentage * 100))
-                            rospy.loginfo("USB: %s",  status.plug_usb)
-                        
-                        # rospy.loginfo('service response' + str(response))
-                        # break
+                        else:
+                            if attr == 'button_trackpad':
+                                rospy.loginfo("Battery: %s %%", ( msg.battery_percentage * 100))
+                                rospy.loginfo("USB: %s",  msg.plug_usb)
+                            break
+
+                        response = request(req_msg)
+                        rospy.loginfo('service response' + str(response))
+                        break
 
                     except rospy.ServiceException as e:
                         rospy.logwarn("Service call failed: %s"%e)
                     
-        self.prev_status =  status
+        self.prev_status =  msg
 
 
     def cb_axis(self, msg):
@@ -140,12 +150,8 @@ class StatusToTello(object):
                 val = eval(expr, {}, input_vals)
                 setattr(vel_vec, k, scale * val)
 
-        self.vel_msg = vel_to_pub
-
-        #if self.pub_vel_flag:
-
-            # /cmd_vel publishen
-        self.pub_vel.publish(self.vel_msg)
+        #self.vel_msg = vel_to_pub
+        self.pub_vel.publish(vel_to_pub)
 
 
 

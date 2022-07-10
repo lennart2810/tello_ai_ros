@@ -46,8 +46,8 @@
        <!-- run face_detector_node with /tello_view topic ... -->
       <group if="$(eval arg('view') == 'tello')">
             <node pkg="tello_ai_ros" 
-                  type="face_detector_node.py" 
-                  name="face_detector_node" 
+                  type="detector_node.py" 
+                  name="detector_node" 
                   args="$(arg view)"
                   output="screen" >
                   <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
@@ -57,8 +57,8 @@
       <!-- or remap /tello_view to /camera_view if view == 'camera' -->
       <group if="$(eval arg('view') == 'camera')">
             <node pkg="tello_ai_ros" 
-                  type="face_detector_node.py" 
-                  name="face_detector_node" 
+                  type="detector_node.py" 
+                  name="detector_node" 
                   args="$(arg view)"
                   output="screen" >
                   <remap from="/tello_view" to="/camera_view"/>
