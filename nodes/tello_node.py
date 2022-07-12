@@ -70,7 +70,8 @@ class TelloNode(object):
             cmd_vel.linear.z = int(msg.linear.z)
             cmd_vel.angular.z = int(msg.angular.z)
             
-            self.tello.send_rc_control(cmd_vel.linear.y, cmd_vel.linear.x, cmd_vel.linear.z, cmd_vel.angular.z)
+            self.tello.send_rc_control(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.linear.z, cmd_vel.angular.z)
+            # send_rc_control(self, left_right_velocity, forward_backward_velocity, up_down_velocity, yaw_velocity) 
 
         self.prev_cmd_vel = msg
             
@@ -97,6 +98,7 @@ class TelloNode(object):
 
             elif req.cross == True:
                 self.tello.takeoff()
+                self.tello.move_up(40)
             elif req.circle == True:
                 self.tello.land()
             elif req.triangle == True:

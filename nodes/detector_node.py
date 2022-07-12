@@ -50,32 +50,42 @@ class DetectorNode(object):
         found_object, object_frame, positions = self.detector.process_view(frame)
 
         if found_object:
-            
             # calculate cmd_vel from target position and object position
             cmd_vel = self.compute_cmd_vel(positions)
+        else:
+            # rotate to find object
+            cmd_vel = Twist()
+            cmd_vel.angular.z = int(10)
 
-            # pub the cmd_vel topic 
-            self.pub_vel.publish(cmd_vel)
+        # pub the cmd_vel topic 
+        self.pub_vel.publish(cmd_vel)
             
-        # convert and pub analysed face image 
+        # convert and pub analysed image 
         object_frame = self.bridge.cv2_to_imgmsg(object_frame, 'bgr8')
         self.pub_detection.publish(object_frame)
 
 
     def compute_cmd_vel(self, positions):
 
-        e_x = self.goal[0] - positions[0]
-        e_y = self.goal[1] - positions[1] 
-        e_z = self.goal[2] - positions[2]
+        """
+        image --> twist
+        x - x
+        y - z
+        z - y
+        """
+
+        e_x = positions[0] - self.goal[0]
+        e_y = positions[1] - self.goal[1]
+        e_z = positions[2] - self.goal[2]
         
-        p_x = 0.1
+        p_x = 0.2
         p_y = 0.1
         p_z = 0.05
 
         cmd_vel = Twist()
         cmd_vel.linear.x = int(e_x * p_x)
-        cmd_vel.linear.y = int(e_y * p_y)
-        #cmd_vel.linear.z = int(e_z * p_z)
+        #cmd_vel.linear.y = int(e_z * p_z)
+        #cmd_vel.linear.z = int(e_y * p_y)
         #cmd_vel.angular.z = int(msg.angular.z) ??? how to handle this ???
 
         return cmd_vel
