@@ -13,8 +13,8 @@ class DetectorNode(object):
  
         # init node, publisher and subscriber
         rospy.init_node('detector_node', anonymous=False)
-        rospy.Subscriber('/tello_view', Image, self.frame_callback, queue_size=1)
-        self.pub_detection = rospy.Publisher('/view_detection', Image, queue_size=1)
+        rospy.Subscriber('tello_view', Image, self.frame_callback, queue_size=1)
+        self.pub_detection = rospy.Publisher('object_detection', Image, queue_size=1)
         self.pub_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
         # read params from tello.yaml
@@ -28,44 +28,59 @@ class DetectorNode(object):
             rospy.loginfo('Frame Shape: ' + view + str(self.frame_shape))
 
         goal_params = rospy.get_param('~goal')
-        goal = (goal_params['x'], goal_params['y'], goal_params['z'])
+        self.goal = (goal_params['x'], goal_params['y'], goal_params['z'])
 
         roi_params = rospy.get_param('~roi')
         roi = (roi_params['nose'], roi_params['eye_l'], roi_params['eye_r'])
         
         # create FaceDetector object
-        self.detector = FaceDetector(self.frame_shape, goal, roi)
+        self.detector = FaceDetector(self.frame_shape, roi)
 
         # cv2_bridge
         self.bridge = CvBridge()
 
+
     def frame_callback(self, msg):
-        #frame = np.fromstring(msg.data, dtype=np.uint8)
+
+        # read and reshape image data
         frame = np.frombuffer(msg.data, dtype=np.uint8)
         frame = frame.reshape(self.frame_shape)
 
         # get analysed image from FaceDetector
-        found_face, face_frame, errors = self.detector.draw_infos_on_img(frame)
+        found_object, object_frame, positions = self.detector.process_view(frame)
 
-        #if found_face:
+        if found_object:
+            
+            # calculate cmd_vel from target position and object position
+            cmd_vel = self.compute_cmd_vel(positions)
 
             # pub the cmd_vel topic 
-        self.errors_to_cmd_vel(errors)
+            self.pub_vel.publish(cmd_vel)
             
-            # convert and pub analysed face image 
-        face_frame = self.bridge.cv2_to_imgmsg(face_frame, 'bgr8')
-        self.pub_detection.publish(face_frame)
-
-        #else:
-            #empty_frame = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
-            #self.pub_detection.publish(empty_frame)
+        # convert and pub analysed face image 
+        object_frame = self.bridge.cv2_to_imgmsg(object_frame, 'bgr8')
+        self.pub_detection.publish(object_frame)
 
 
+    def compute_cmd_vel(self, positions):
+
+        e_x = self.goal[0] - positions[0]
+        e_y = self.goal[1] - positions[1] 
+        e_z = self.goal[2] - positions[2]
         
-    def errors_to_cmd_vel(self, errors):
-        pass
-        #cmd_vel_msg = Twist()
-        #self.pub_vel.publish(cmd_vel_msg)
+        p_x = 0.1
+        p_y = 0.1
+        p_z = 0.05
+
+        cmd_vel = Twist()
+        cmd_vel.linear.x = int(e_x * p_x)
+        cmd_vel.linear.y = int(e_y * p_y)
+        #cmd_vel.linear.z = int(e_z * p_z)
+        #cmd_vel.angular.z = int(msg.angular.z) ??? how to handle this ???
+
+        return cmd_vel
+
+
 
 if __name__ == '__main__':
 

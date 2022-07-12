@@ -19,8 +19,8 @@ class TelloNode(object):
             
         # init node, publisher, subscriber and service
         rospy.init_node('tello_node', anonymous=False)
-        self.pub = rospy.Publisher('/tello_view', Image, queue_size=10)
-        rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback, queue_size=1)
+        self.pub = rospy.Publisher('tello_view', Image, queue_size=10)
+        rospy.Subscriber('cmd_vel', Twist, self.cmd_vel_callback, queue_size=1)
         self.prev_cmd_vel = Twist()
         rospy.Service('tello_button_service', tello_service, self.handle_tello_service)
 

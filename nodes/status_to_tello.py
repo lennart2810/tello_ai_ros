@@ -33,6 +33,8 @@ class StatusToTello(object):
                 self.attrs.append(attr)
         rospy.Subscriber('status', Status, self.cb_status, queue_size=1)
 
+        self.pub_cmd_flag = True
+
         self.button_attrs = []
         self.axis_attrs = []
         for attr in Status.__slots__:
@@ -122,6 +124,7 @@ class StatusToTello(object):
                             if attr == 'button_trackpad':
                                 rospy.loginfo("Battery: %s %%", ( msg.battery_percentage * 100))
                                 rospy.loginfo("USB: %s",  msg.plug_usb)
+                                #self.pub_cmd_flag = not self.pub_cmd_flag
                             break
 
                         response = request(req_msg)
@@ -135,7 +138,7 @@ class StatusToTello(object):
 
 
     def cb_axis(self, msg):
-
+        
         input_vals = {}
         for attr in self.attrs: # switch to self.axis_attrs!!
             input_vals[attr] = getattr(msg, attr)

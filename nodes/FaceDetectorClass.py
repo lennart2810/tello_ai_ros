@@ -8,9 +8,9 @@ from math import dist # distace between two points
 
 class FaceDetector():
  
-    def __init__(self, frame_shape, goal, roi):
+    def __init__(self, frame_shape, roi):
         
-        self.goal = goal # goal values (x,y,z)
+        #self.goal = goal # goal values (x,y,z)
         self.roi = roi # regions of interest (face_landmarks nose, left_eye, right_eye)
 
         # centerpoint
@@ -22,16 +22,16 @@ class FaceDetector():
                                                          min_detection_confidence=0.5,
                                                          min_tracking_confidence=0.5)
     
-    def get_face_position(self, landmarks, center_point):
+    def get_face_position(self, landmarks):
         
         # calc pixels between nose and centerpoint
         nose = landmarks[0]
-        x = int(dist((nose[0],center_point[1]), center_point)) # assume nose_y = center_point_y
-        y = int(dist((center_point[0],nose[1]), center_point)) # assume nose_x = center_point_x
+        x = int(dist((nose[0],self.center_point[1]), self.center_point)) # assume nose_y = center_point_y
+        y = int(dist((self.center_point[0],nose[1]), self.center_point)) # assume nose_x = center_point_x
         
-        if nose[0] >= center_point[0]:
+        if nose[0] >= self.center_point[0]:
             x = -x
-        if nose[1] >= center_point[1]:
+        if nose[1] >= self.center_point[1]:
             y = -y
         
         # calc pixels between both eyes 
@@ -40,16 +40,6 @@ class FaceDetector():
         z = int(dist(eye_l, eye_r))
         
         return (x, y, z)
-    
-    def get_position_error(self, position):
-        
-        # calc 3D position error
-        # error = target - value
-        e_x = self.goal[0] - position[0]
-        e_y = self.goal[1] - position[1]
-        e_z = self.goal[2] - position[2]
-        
-        return (e_x, e_y, e_z)
         
     def get_face_landmarks(self, frame):
 
@@ -79,61 +69,70 @@ class FaceDetector():
         else:
             return None
 
-    def draw_infos_on_img(self, img):
+    def draw_infos_on_frame(self, img, landmarks, positions):
 
-        landmarks = self.get_face_landmarks(img)
+        # draw interesting landmarks (nose and eyes)
+        for lm in landmarks:
+            cv2.circle(img, lm, radius=5, color=(225, 0, 100), thickness=2) 
 
-        errors = (0,0,0)
-        found_face = True
+        # draw goal_arrow (startpoint = nose, endpoint = centerpoint)
+        cv2.arrowedLine(img, landmarks[0], self.center_point, color=(0, 255, 0), thickness=5)
+        # draw monobraue (eye to eye)
+        cv2.line(img, landmarks[1], landmarks[2], color=(0, 0, 0), thickness=8)
 
-        # check for landmark - points
+        # draw crosshair (Fadenkreuz)
+        cv2.line(img, (self.center_point[0]-30, self.center_point[1]), (self.center_point[0]+30, self.center_point[1]), color=(0, 0, 0), thickness=2)
+        cv2.line(img, (self.center_point[0],self.center_point[1]-30), (self.center_point[0],self.center_point[1]+30), color=(0, 0, 0), thickness=2)
+        cv2.circle(img, self.center_point, radius=25, color=(0, 0, 0), thickness=2)
+        cv2.circle(img, self.center_point, radius=18, color=(0, 0, 0), thickness=2)
+        cv2.circle(img, self.center_point, radius=1, color=(0, 0, 255), thickness=5)
+
+        # flip image
+        #img = cv2.flip(img, 1)
+
+        # display positions
+        cv2.putText(img, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        cv2.putText(img, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        cv2.putText(img, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        
+        # display errors
+        #cv2.putText(img, f'x: {errors[0]} pix', (20, 100), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
+        #cv2.putText(img, f'y: {errors[1]} pix', (20, 120), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
+        #cv2.putText(img, f'z: {errors[2]} pix', (20, 140), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
+
+        # calculate and display FPS
+        # cTime = time.time()
+        # fps = 1.0 / (cTime - pTime)
+        # pTime = cTime
+        # cv2.putText(image, f'FPS: {int(fps)}', (20, 20), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+
+        return img
+
+
+    def process_view(self, frame):
+ 
+        # analyse frame for facial landmarks
+        landmarks = self.get_face_landmarks(frame)
+   
+        # check for facial landsmarks 
         if landmarks is not None:
 
-            #found_face = True
-            
-            # get distances
-            positions = self.get_face_position(landmarks, self.center_point)
-            errors = self.get_position_error(positions)
-            
-            # draw interesting landmarks (nose and eyes)
-            for lm in landmarks:
-                cv2.circle(img, lm, radius=5, color=(225, 0, 100), thickness=2) 
+            face_found = True
 
-            # draw goal_arrow (startpoint = nose, endpoint = centerpoint)
-            cv2.arrowedLine(img, landmarks[0], self.center_point, color=(0, 255, 0), thickness=5)
-            # draw monobraue (eye to eye)
-            cv2.line(img, landmarks[1], landmarks[2], color=(0, 0, 0), thickness=8)
+            # calculate face position (x,y for nose position and z for distance between eyes)
+            positions = self.get_face_position(landmarks)
 
-            # draw crosshair (Fadenkreuz)
-            cv2.line(img, (self.center_point[0]-30, self.center_point[1]), (self.center_point[0]+30, self.center_point[1]), color=(0, 0, 0), thickness=2)
-            cv2.line(img, (self.center_point[0],self.center_point[1]-30), (self.center_point[0],self.center_point[1]+30), color=(0, 0, 0), thickness=2)
-            cv2.circle(img, self.center_point, radius=25, color=(0, 0, 0), thickness=2)
-            cv2.circle(img, self.center_point, radius=18, color=(0, 0, 0), thickness=2)
-            cv2.circle(img, self.center_point, radius=1, color=(0, 0, 255), thickness=5)
+            # draw some infos on the frame
+            frame = self.draw_infos_on_frame(frame, landmarks, positions)
 
-            # flip image
-            img = cv2.flip(img, 1)
+        else: 
+            face_found = False
+            positions = (0,0,0)
 
-            # display positions
-            cv2.putText(img, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-            cv2.putText(img, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-            cv2.putText(img, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-            
-            # display errors
-            cv2.putText(img, f'x: {errors[0]} pix', (20, 100), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
-            cv2.putText(img, f'y: {errors[1]} pix', (20, 120), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
-            cv2.putText(img, f'z: {errors[2]} pix', (20, 140), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
 
-            # calculate and display FPS
-            # cTime = time.time()
-            # fps = 1.0 / (cTime - pTime)
-            # pTime = cTime
-            # cv2.putText(image, f'FPS: {int(fps)}', (20, 20), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        return face_found, frame, positions
 
-        #else:
-            #found_face = False
-
-        return found_face, img, errors
+        
 
 def main():
 
@@ -143,10 +142,10 @@ def main():
     frame_shape = frame.shape
     #frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
 
-    goal = (0,0,40) # goal values (x,y,z) --> read values from yaml file
+    #goal = (0,0,40) # goal values (x,y,z) --> read values from yaml file
     roi = (4,145,374) # regions of interest (face_landmarks nose, left_eye, right_eye)
 
-    detector = FaceDetector(frame_shape, goal, roi)
+    detector = FaceDetector(frame_shape, roi)
     
     while cap.isOpened():
 
