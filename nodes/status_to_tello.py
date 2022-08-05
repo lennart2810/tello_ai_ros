@@ -138,6 +138,8 @@ class StatusToTello(object):
 
 
     def cb_axis(self, msg):
+
+        # wenn ai aktiviert ist,  soll 
         
         input_vals = {}
         for attr in self.attrs: # switch to self.axis_attrs!!
@@ -154,7 +156,7 @@ class StatusToTello(object):
                 setattr(vel_vec, k, scale * val)
 
         #self.vel_msg = vel_to_pub
-        self.pub_vel.publish(vel_to_pub)
+        #self.pub_vel.publish(vel_to_pub)
 
 
 

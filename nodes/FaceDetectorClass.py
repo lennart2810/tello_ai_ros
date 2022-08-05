@@ -26,7 +26,7 @@ class FaceDetector():
         
         # calc pixels between nose and centerpoint
         nose = landmarks[0]
-        x = int(dist((nose[0],self.center_point[1]), self.center_point)) # assume nose_y = center_point_y
+        x = -int(dist((nose[0], self.center_point[1]), self.center_point)) # assume nose_y = center_point_y
         y = int(dist((self.center_point[0],nose[1]), self.center_point)) # assume nose_x = center_point_x
         
         if nose[0] >= self.center_point[0]:
@@ -91,9 +91,9 @@ class FaceDetector():
         #img = cv2.flip(img, 1)
 
         # display positions
-        cv2.putText(img, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-        cv2.putText(img, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-        cv2.putText(img, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        #cv2.putText(img, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        #cv2.putText(img, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        #cv2.putText(img, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
         
         # display errors
         #cv2.putText(img, f'x: {errors[0]} pix', (20, 100), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)

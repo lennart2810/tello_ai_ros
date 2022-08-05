@@ -17,7 +17,7 @@ camera_frame:
 goal:
   x: 0
   y: 0
-  z: 40
+  z: 100
 
 # regions of interest (face_landmarks nose, left_eye, right_eye)
 roi:

@@ -5,6 +5,7 @@ import rospy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
+import cv2
 import numpy as np
 from FaceDetectorClass import FaceDetector
 
@@ -51,6 +52,18 @@ class DetectorNode(object):
 
         if found_object:
             # calculate cmd_vel from target position and object position
+
+            # hier infos der position auf das bild schreiben
+            x_string = f'x: {positions[0]} pix'
+            if positions[0] > 0:
+                x_string += 'nach rechts: x --> y'
+            elif positions[0] < 0:
+                x_string += 'nach links: -x --> -y'
+                    # display positions
+            cv2.putText(object_frame, x_string, (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+            cv2.putText(object_frame, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+            cv2.putText(object_frame, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+
             cmd_vel = self.compute_cmd_vel(positions)
         else:
             # rotate to find object
@@ -71,21 +84,25 @@ class DetectorNode(object):
         image --> twist
         x - x
         y - z
-        z - y
+        z - y ??
+
+        horizontale Abweichung vom Objekt zum Ziel (e_x) resultiert in links - rechts Bewegung der Drohne (y-Achse)
+        vertikaler Error (e_y) resultiert in auf - ab fliegen der Drohne (z-Achse)
+        falsche Entfernung zu Ziel (e_z) resultiert in vor - zurück Bewegung der Drohne
         """
 
         e_x = positions[0] - self.goal[0]
         e_y = positions[1] - self.goal[1]
         e_z = positions[2] - self.goal[2]
         
-        p_x = 0.2
+        p_x = 0.1
         p_y = 0.1
-        p_z = 0.05
+        p_z = 0.1
 
         cmd_vel = Twist()
-        cmd_vel.linear.x = int(e_x * p_x)
-        #cmd_vel.linear.y = int(e_z * p_z)
-        #cmd_vel.linear.z = int(e_y * p_y)
+        cmd_vel.linear.x = int(e_z * p_x)
+        cmd_vel.linear.y = int(-e_x * p_y)
+        cmd_vel.linear.z = int(e_y * p_z)
         #cmd_vel.angular.z = int(msg.angular.z) ??? how to handle this ???
 
         return cmd_vel
