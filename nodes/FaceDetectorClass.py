@@ -62,6 +62,7 @@ class FaceDetector():
                     lm = face.landmark[landmark]
                     x = int(lm.x * shape[1])
                     y = int(lm.y * shape[0])
+                    z = lm.z # scheinbar wircklich auch die 3 Dimension vorhanden !!
                     points.append((x,y))
 
             return points
@@ -86,25 +87,6 @@ class FaceDetector():
         cv2.circle(img, self.center_point, radius=25, color=(0, 0, 0), thickness=2)
         cv2.circle(img, self.center_point, radius=18, color=(0, 0, 0), thickness=2)
         cv2.circle(img, self.center_point, radius=1, color=(0, 0, 255), thickness=5)
-
-        # flip image
-        #img = cv2.flip(img, 1)
-
-        # display positions
-        #cv2.putText(img, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-        #cv2.putText(img, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-        #cv2.putText(img, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-        
-        # display errors
-        #cv2.putText(img, f'x: {errors[0]} pix', (20, 100), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
-        #cv2.putText(img, f'y: {errors[1]} pix', (20, 120), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
-        #cv2.putText(img, f'z: {errors[2]} pix', (20, 140), cv2.FONT_HERSHEY_PLAIN,1, (0, 0, 255), 1)
-
-        # calculate and display FPS
-        # cTime = time.time()
-        # fps = 1.0 / (cTime - pTime)
-        # pTime = cTime
-        # cv2.putText(image, f'FPS: {int(fps)}', (20, 20), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
 
         return img
 

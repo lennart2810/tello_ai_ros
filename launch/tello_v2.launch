@@ -24,9 +24,19 @@
             name="camera_node" 
             output="screen" >
       </node>
+
+      <!-- and tello node if mode == disabled -->
+      <group if="$(eval arg('mode') == 'disabled')">
+            <node pkg="tello_ai_ros" 
+                  type="tello_node.py" 
+                  name="tello_node" 
+                  args="$(arg mode)"
+                  output="screen" >
+            </node>
+      </group>
   </group>
   
-  <!-- run remote control if rc == true-->
+  <!-- run remote control if rc == true -->
   <group if="$(arg rc)">
       <!-- launch ds4_driver -->
       <include file="$(find ds4_driver)/launch/ds4_driver.launch" /> 

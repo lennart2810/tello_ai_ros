@@ -10,6 +10,7 @@ import sys
 import rospy
 #import subprocess
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String, Bool
 from ds4_driver.msg import Status, Feedback
 from tello_ai_ros.srv import tello_service, tello_serviceRequest, tello_serviceResponse
 
@@ -69,14 +70,24 @@ class StatusToTello(object):
         self.feedback.set_led_flash = True
         self.pub_feedback = rospy.Publisher('set_feedback', Feedback, queue_size=1)
 
+        # /control_flag
+        self.ai_control_flag = False
+        self.pub_control_flag = rospy.Publisher('ai_control_flag', Bool, queue_size=1)
+
 
     def cb_status(self, msg):
 
+        # safety feature (enabling switch) for autonomous drone control (ai mode)
+        ai_flag = msg.touch0.active
+        if ai_flag is not self.ai_control_flag: # check for change in flag
+            self.pub_control_flag.publish(ai_flag) # touchpad acitvated --> ai mode (True), else rc (False) 
+
+        if ai_flag == False:
+            # Axis
+            self.cb_axis(msg)
+
         # Buttons
         self.cb_button(msg)
-
-        # Axis
-        self.cb_axis(msg)
 
         # /set_feedback <-- Batterieanzeige (Controller)
         if msg.battery_percentage <= 0.375:
@@ -139,7 +150,7 @@ class StatusToTello(object):
 
     def cb_axis(self, msg):
 
-        # wenn ai aktiviert ist,  soll 
+        # wenn ai aktiviert ist,  soll von hier aus nicht gepublisht werden
         
         input_vals = {}
         for attr in self.attrs: # switch to self.axis_attrs!!
@@ -155,8 +166,8 @@ class StatusToTello(object):
                 val = eval(expr, {}, input_vals)
                 setattr(vel_vec, k, scale * val)
 
-        #self.vel_msg = vel_to_pub
-        #self.pub_vel.publish(vel_to_pub)
+        self.vel_msg = vel_to_pub # notwendig???
+        self.pub_vel.publish(vel_to_pub)
 
 
 

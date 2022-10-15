@@ -8,6 +8,7 @@ from cv_bridge import CvBridge
 
 from djitellopy import Tello
 
+
 from geometry_msgs.msg import Twist
 
 from tello_ai_ros.srv import tello_service, tello_serviceResponse, tello_serviceRequest
@@ -21,7 +22,8 @@ class TelloNode(object):
         rospy.init_node('tello_node', anonymous=False)
         self.pub = rospy.Publisher('tello_view', Image, queue_size=10)
         rospy.Subscriber('cmd_vel', Twist, self.cmd_vel_callback, queue_size=1)
-        self.prev_cmd_vel = Twist()
+        self.prev_cmd_vel = Twist() # notwenig?? wrid nur in 76 verwendet!
+
         rospy.Service('tello_button_service', tello_service, self.handle_tello_service)
 
         self.mode = mode
@@ -30,7 +32,7 @@ class TelloNode(object):
             self.tello.connect()
             self.tello.streamon()
         elif self.mode == 'disabled':
-            rospy.logwarn('Tello Drone is completly disabled!')
+            rospy.logwarn('The node is started without connecting to the drone!')
 
         # cv2_bridge
         self.bridge = CvBridge()
@@ -42,7 +44,7 @@ class TelloNode(object):
                 self.pub_tello_view()
             
             #self.print_debug_info()
-            rospy.sleep(0.001)
+            rospy.sleep(0.001) # notwendig??
 
         # release tello 
         if self.mode == 'normal' or self.mode == 'silent':
@@ -56,7 +58,7 @@ class TelloNode(object):
         frame_read = self.tello.get_frame_read()
         frame = frame_read.frame
 
-        # pub tello_view
+        # pub tello_view after converting with CvBridge
         tello_view = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
         self.pub.publish(tello_view)
 
@@ -70,10 +72,10 @@ class TelloNode(object):
             cmd_vel.linear.z = int(msg.linear.z)
             cmd_vel.angular.z = int(msg.angular.z)
             
-            self.tello.send_rc_control(cmd_vel.linear.y, cmd_vel.linear.x, cmd_vel.linear.z, cmd_vel.angular.z)
             # send_rc_control(self, left_right_velocity, forward_backward_velocity, up_down_velocity, yaw_velocity) 
+            self.tello.send_rc_control(cmd_vel.linear.y, cmd_vel.linear.x, cmd_vel.linear.z, cmd_vel.angular.z)
 
-        self.prev_cmd_vel = msg
+        self.prev_cmd_vel = msg # notwenig??
             
             
     def print_debug_info(self):

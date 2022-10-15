@@ -2,8 +2,10 @@
 
 import sys
 import rospy
+from ds4_driver.msg import Feedback
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String, Bool
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -15,8 +17,17 @@ class DetectorNode(object):
         # init node, publisher and subscriber
         rospy.init_node('detector_node', anonymous=False)
         rospy.Subscriber('tello_view', Image, self.frame_callback, queue_size=1)
+
+        rospy.Subscriber('ai_control_flag', Bool, self.ai_control_flag_callback)
+        self.ai_control_flag = False
+
         self.pub_detection = rospy.Publisher('object_detection', Image, queue_size=1)
         self.pub_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+
+        # /set_feedback
+        self.feedback = Feedback()
+        self.feedback.set_led = True
+        self.pub_feedback = rospy.Publisher('set_feedback', Feedback, queue_size=1)
 
         # read params from tello.yaml
         if view == 'tello':
@@ -39,6 +50,13 @@ class DetectorNode(object):
 
         # cv2_bridge
         self.bridge = CvBridge()
+
+    
+    def ai_control_flag_callback(self, msg):
+        if msg.data:
+            self.ai_control_flag = True
+        else:
+            self.ai_control_flag = False
 
 
     def frame_callback(self, msg):
@@ -70,8 +88,18 @@ class DetectorNode(object):
             cmd_vel = Twist()
             cmd_vel.angular.z = int(10)
 
-        # pub the cmd_vel topic 
-        self.pub_vel.publish(cmd_vel)
+        # pub the cmd_vel topic if nabling switch is active
+        if self.ai_control_flag:
+            self.pub_vel.publish(cmd_vel)
+
+            if found_object:
+                self.feedback.led_r = 0; self.feedback.led_g = 1; self.feedback.led_b = 0
+            else:
+                self.feedback.led_r = 1; self.feedback.led_g = 0; self.feedback.led_b = 0
+        else:
+            self.feedback.led_r = 0; self.feedback.led_g = 0; self.feedback.led_b = 1
+
+        self.pub_feedback.publish(self.feedback)
             
         # convert and pub analysed image 
         object_frame = self.bridge.cv2_to_imgmsg(object_frame, 'bgr8')
