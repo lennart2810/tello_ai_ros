@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <arg name="mode" default="normal" doc="'normal', 'silent' or 'disabled'- mode"/>
+
+  <!-- run tello node ... -->
+      <node pkg="tello_ai_ros" 
+            type="tello_node.py" 
+            name="tello_node" 
+            args="$(arg mode)"
+            output="screen" >
+      </node>
+  
+  <!-- run remote control if rc == true-->
+
+      <!-- launch ds4_driver -->
+      <include file="$(find ds4_driver)/launch/ds4_driver.launch" /> 
+
+      <!-- run status_to_tello node -->
+      <node pkg="tello_ai_ros" 
+            type="status_to_tello.py" 
+            name="status_to_tello" 
+            output="screen" >
+            <rosparam command="load" file="$(find tello_ai_ros)/config/status_to_tello.yaml" />
+      </node>
+
+   <group if="$(eval arg('mode') == 'disabled')">
+      <node pkg="tello_ai_ros" 
+            type="camera_node.py" 
+            name="camera_node" 
+            output="screen" >
+      </node>
+
+      <!-- run face_detector_node with /tello_view topic ... -->
+            <node pkg="tello_ai_ros" 
+                  type="detector_node.py" 
+                  name="detector_node" 
+                  args="camera"
+                  output="screen" >
+                  <remap from="/tello_view" to="/camera_view"/>
+                  <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+            </node>
+  </group>
+
+        <group if="$(eval arg('mode') != 'disabled')">
+            <node pkg="tello_ai_ros" 
+                  type="detector_node.py" 
+                  name="detector_node" 
+                  args="tello"
+                  output="screen" >
+                  <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+            </node>
+      </group>
+   
+  <!-- run artificial intelligence if ai == true  -->
+
+
+
+
+
+
+  <!-- run rqt for ImageViewer and NodeGraph-->
+
+      <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/> 
+
+
+</launch>

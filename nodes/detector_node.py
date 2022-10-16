@@ -69,16 +69,8 @@ class DetectorNode(object):
         found_object, object_frame, positions = self.detector.process_view(frame)
 
         if found_object:
-            # calculate cmd_vel from target position and object position
-
-            # hier infos der position auf das bild schreiben
-            x_string = f'x: {positions[0]} pix'
-            if positions[0] > 0:
-                x_string += 'nach rechts: x --> y'
-            elif positions[0] < 0:
-                x_string += 'nach links: -x --> -y'
-                    # display positions
-            cv2.putText(object_frame, x_string, (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+            # display positions
+            cv2.putText(object_frame, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
             cv2.putText(object_frame, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
             cv2.putText(object_frame, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
 
@@ -88,14 +80,17 @@ class DetectorNode(object):
             cmd_vel = Twist()
             cmd_vel.angular.z = int(10)
 
-        # pub the cmd_vel topic if nabling switch is active
+        # pub the cmd_vel topic if enabling switch is active
         if self.ai_control_flag:
             self.pub_vel.publish(cmd_vel)
-
+            
+            # set controller led to green if object is detected, otherwise set led to red
             if found_object:
                 self.feedback.led_r = 0; self.feedback.led_g = 1; self.feedback.led_b = 0
             else:
                 self.feedback.led_r = 1; self.feedback.led_g = 0; self.feedback.led_b = 0
+        
+        # set led to blue for remote control
         else:
             self.feedback.led_r = 0; self.feedback.led_g = 0; self.feedback.led_b = 1
 
@@ -123,18 +118,17 @@ class DetectorNode(object):
         e_y = positions[1] - self.goal[1]
         e_z = positions[2] - self.goal[2]
         
-        p_x = 0.1
-        p_y = 0.1
-        p_z = 0.1
+        p_x = 0.2
+        p_y = 0.2
+        p_z = 0.2 
 
         cmd_vel = Twist()
-        cmd_vel.linear.x = int(e_z * p_x)
-        cmd_vel.linear.y = int(-e_x * p_y)
-        cmd_vel.linear.z = int(e_y * p_z)
+        cmd_vel.linear.x = int(-e_z * p_x)  # x.drohne --> vor und zurück in der ebene; hier wird abstand zum gesicht geregelt
+        cmd_vel.linear.y = int(e_x * p_y) # y.drohne --> links rechts in der ebene; positionierung in der vertikalen achse 
+        cmd_vel.linear.z = int(e_y * p_z) # z.drone --> hoch und runter entland der hochachse
         #cmd_vel.angular.z = int(msg.angular.z) ??? how to handle this ???
 
         return cmd_vel
-
 
 
 if __name__ == '__main__':

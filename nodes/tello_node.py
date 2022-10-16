@@ -84,6 +84,7 @@ class TelloNode(object):
         rospy.loginfo(text)
         #text = "State: {}%".format(self.tello.get_current_state())
         #rospy.loginfo(text)
+        
 
     def handle_tello_service(self, req):
         
@@ -100,7 +101,7 @@ class TelloNode(object):
 
             elif req.cross == True:
                 self.tello.takeoff()
-                self.tello.move_up(40)
+                #self.tello.move_up(40)
             elif req.circle == True:
                 self.tello.land()
             elif req.triangle == True:

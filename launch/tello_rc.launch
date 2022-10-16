@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <arg name="mode" default="normal" doc="'normal', 'silent' or 'disabled'- mode"/>
+  <arg name="rc" default="true" doc="enable or disable remote control (ds4)"/>
+  <arg name="rqt" default="true" doc="enable or disable rqt gui"/>
+
+  <!-- run tello node ... -->
+  <node pkg="tello_ai_ros" 
+        type="tello_node.py" 
+        name="tello_node" 
+        args="$(arg mode)"
+        output="screen" >
+  </node>
+
+  <!-- launch ds4_driver -->
+  <include file="$(find ds4_driver)/launch/ds4_driver.launch" /> 
+
+  <!-- run status_to_tello node -->
+  <node pkg="tello_ai_ros" 
+        type="status_to_tello.py" 
+        name="status_to_tello" 
+        output="screen" >
+        <rosparam command="load" file="$(find tello_ai_ros)/config/status_to_tello.yaml" />
+  </node>
+
+  <!-- run rqt for ImageViewer and NodeGraph-->
+  <group if="$(arg rqt)">
+      <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/> 
+  </group>
+
+</launch>

@@ -1,3 +1,5 @@
+# https://google.github.io/mediapipe/solutions/face_mesh#python-solution-api
+
 import cv2
 import mediapipe as mp
 from math import dist # distace between two points
@@ -21,26 +23,31 @@ class FaceDetector():
                                                          refine_landmarks=True,
                                                          min_detection_confidence=0.5,
                                                          min_tracking_confidence=0.5)
+
+                                                    
+    def process_view(self, frame):
+ 
+        # analyse frame for facial landmarks
+        landmarks = self.get_face_landmarks(frame)
+   
+        # check for facial landsmarks 
+        if landmarks is not None:
+
+            face_found = True
+
+            # calculate face position (x,y for nose position and z for distance between eyes)
+            positions = self.get_face_position(landmarks)
+
+            # draw some infos on the frame
+            frame = self.draw_infos_on_frame(frame, landmarks, positions)
+
+        else: 
+            face_found = False
+            positions = (0,0,0)
+
+        return face_found, frame, positions   
     
-    def get_face_position(self, landmarks):
-        
-        # calc pixels between nose and centerpoint
-        nose = landmarks[0]
-        x = -int(dist((nose[0], self.center_point[1]), self.center_point)) # assume nose_y = center_point_y
-        y = int(dist((self.center_point[0],nose[1]), self.center_point)) # assume nose_x = center_point_x
-        
-        if nose[0] >= self.center_point[0]:
-            x = -x
-        if nose[1] >= self.center_point[1]:
-            y = -y
-        
-        # calc pixels between both eyes 
-        eye_l = landmarks[1]
-        eye_r = landmarks[2]
-        z = int(dist(eye_l, eye_r))
-        
-        return (x, y, z)
-        
+    
     def get_face_landmarks(self, frame):
 
         shape = frame.shape
@@ -70,6 +77,27 @@ class FaceDetector():
         else:
             return None
 
+    
+    def get_face_position(self, landmarks):
+        
+        # calc pixels between nose and centerpoint
+        nose = landmarks[0]
+        x = -int(dist((nose[0], self.center_point[1]), self.center_point)) # assume nose_y = center_point_y
+        y = int(dist((self.center_point[0],nose[1]), self.center_point)) # assume nose_x = center_point_x
+        
+        if nose[0] >= self.center_point[0]:
+            x = -x
+        if nose[1] >= self.center_point[1]:
+            y = -y
+        
+        # calc pixels between both eyes 
+        eye_l = landmarks[1]
+        eye_r = landmarks[2]
+        z = int(dist(eye_l, eye_r))
+        
+        return (x, y, z)
+        
+
     def draw_infos_on_frame(self, img, landmarks, positions):
 
         # draw interesting landmarks (nose and eyes)
@@ -89,31 +117,6 @@ class FaceDetector():
         cv2.circle(img, self.center_point, radius=1, color=(0, 0, 255), thickness=5)
 
         return img
-
-
-    def process_view(self, frame):
- 
-        # analyse frame for facial landmarks
-        landmarks = self.get_face_landmarks(frame)
-   
-        # check for facial landsmarks 
-        if landmarks is not None:
-
-            face_found = True
-
-            # calculate face position (x,y for nose position and z for distance between eyes)
-            positions = self.get_face_position(landmarks)
-
-            # draw some infos on the frame
-            frame = self.draw_infos_on_frame(frame, landmarks, positions)
-
-        else: 
-            face_found = False
-            positions = (0,0,0)
-
-
-        return face_found, frame, positions
-
         
 
 def main():

@@ -9,7 +9,7 @@ from cv_bridge import CvBridge
 class CameraNode(object):
     def __init__(self):
             
-        # init node, publisher and subscriber
+        # init node and image publisher
         rospy.init_node('camera_node', anonymous=False)
         self.pub = rospy.Publisher('/camera_view', Image, queue_size=1)
 
@@ -21,17 +21,13 @@ class CameraNode(object):
         # run node
         while not rospy.is_shutdown():
                 
-            self.pub_camera_view()
+            _, frame = self.cap.read()
+            camera_view = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
+            self.pub.publish(camera_view)
             rospy.sleep(0.001)
 
         # release cap
         self.cap.release()
-
-
-    def pub_camera_view(self):
-        ret, frame = self.cap.read()
-        camera_view = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
-        self.pub.publish(camera_view)
 
 
 if __name__ == '__main__':
