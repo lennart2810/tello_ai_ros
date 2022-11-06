@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <!-- show doc in command line: roslaunch tello_ai_ros camera_view.launch ——ros -->
+  <arg name="detection" default="pose" doc="detection goal ('pose' or 'face)"/>
+  
+  <!-- run camera node -->
+  <node pkg="tello_ai_ros" 
+        type="camera_node.py" 
+        name="camera_node" 
+        output="screen" >
+  </node>
+   
+  <!-- run artificial intelligence if ai == true  -->
+
+      <!-- remap /tello_view to /camera_view -->
+
+<node pkg="tello_ai_ros" 
+      type="detector_node.py" 
+      name="detector_node" 
+      args="camera $(arg detection)"
+      output="screen" >
+      <remap from="/tello_view" to="/camera_view"/>
+      <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+</node>
+
+
+
+ <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/> 
+
+
+</launch>

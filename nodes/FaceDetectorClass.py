@@ -140,9 +140,9 @@ def main():
             continue
 
         # get analysed image from FaceDetector
-        face_frame = detector.draw_infos_on_img(frame)
+        face_found, frame, positions = detector.process_view(frame)
         
-        cv2.imshow('FaceDetector', face_frame)
+        cv2.imshow('FaceDetector', frame)
         
         if cv2.waitKey(5) & 0xFF == 27:
             cap.release()

@@ -2,61 +2,43 @@
 
 import sys
 import rospy
-from ds4_driver.msg import Feedback
-from sensor_msgs.msg import Image
-from geometry_msgs.msg import Twist
-from std_msgs.msg import String, Bool
-from cv_bridge import CvBridge
-import cv2
 import numpy as np
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
+
+from tello_ai_ros.msg import object_position
+from PoseDetectorClass import PoseDetector
 from FaceDetectorClass import FaceDetector
 
+
 class DetectorNode(object):
-    def __init__(self, view):
+    def __init__(self, view, detector):
  
         # init node, publisher and subscriber
         rospy.init_node('detector_node', anonymous=False)
         rospy.Subscriber('tello_view', Image, self.frame_callback, queue_size=1)
-
-        rospy.Subscriber('ai_control_flag', Bool, self.ai_control_flag_callback)
-        self.ai_control_flag = False
-
         self.pub_detection = rospy.Publisher('object_detection', Image, queue_size=1)
-        self.pub_vel = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+        self.pub_position = rospy.Publisher('object_postion', object_position, queue_size=1) 
 
-        # /set_feedback
-        self.feedback = Feedback()
-        self.feedback.set_led = True
-        self.pub_feedback = rospy.Publisher('set_feedback', Feedback, queue_size=1)
-
-        # read params from tello.yaml
+        # read frame params from tello.yaml
         if view == 'tello':
             frame_params = rospy.get_param('~tello_frame')
-            self.frame_shape = (frame_params['w'], frame_params['h'], frame_params['d'])
-            rospy.loginfo('Frame Shape: ' + view + str(self.frame_shape))
         elif view == 'camera':
             frame_params = rospy.get_param('~camera_frame')
-            self.frame_shape = (frame_params['w'], frame_params['h'], frame_params['d'])
-            rospy.loginfo('Frame Shape: ' + view + str(self.frame_shape))
 
-        goal_params = rospy.get_param('~goal')
-        self.goal = (goal_params['x'], goal_params['y'], goal_params['z'])
+        self.frame_shape = (frame_params['w'], frame_params['h'], frame_params['d'])
+        rospy.loginfo('Frame Shape: ' + view + str(self.frame_shape))
 
-        roi_params = rospy.get_param('~roi')
-        roi = (roi_params['nose'], roi_params['eye_l'], roi_params['eye_r'])
-        
         # create FaceDetector object
-        self.detector = FaceDetector(self.frame_shape, roi)
+        if detector == 'pose':
+            self.detector = PoseDetector(self.frame_shape)
+        elif detector == 'face':
+            roi_params = rospy.get_param('~roi') # roi mit in facedetector einbauen (hardcoden) ist bei pose ja quasi auch
+            roi = (roi_params['nose'], roi_params['eye_l'], roi_params['eye_r'])
+            self.detector = FaceDetector(self.frame_shape, roi)
 
         # cv2_bridge
         self.bridge = CvBridge()
-
-    
-    def ai_control_flag_callback(self, msg):
-        if msg.data:
-            self.ai_control_flag = True
-        else:
-            self.ai_control_flag = False
 
 
     def frame_callback(self, msg):
@@ -66,78 +48,34 @@ class DetectorNode(object):
         frame = frame.reshape(self.frame_shape)
 
         # get analysed image from FaceDetector
-        found_object, object_frame, positions = self.detector.process_view(frame)
+        object_frame, positions = self.detector.process_view(frame) # danger bei face detector noch anpassen!!!
 
-        if found_object:
-            # display positions
-            cv2.putText(object_frame, f'x: {positions[0]} pix', (20, 40), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-            cv2.putText(object_frame, f'y: {positions[1]} pix', (20, 60), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
-            cv2.putText(object_frame, f'z: {positions[2]} pix', (20, 80), cv2.FONT_HERSHEY_PLAIN,1, (255, 255, 255), 1)
+        pos = object_position()
+        pos.detected = False
 
-            cmd_vel = self.compute_cmd_vel(positions)
-        else:
-            # rotate to find object
-            cmd_vel = Twist()
-            cmd_vel.angular.z = int(10)
+        if positions is not None:
 
-        # pub the cmd_vel topic if enabling switch is active
-        if self.ai_control_flag:
-            self.pub_vel.publish(cmd_vel)
-            
-            # set controller led to green if object is detected, otherwise set led to red
-            if found_object:
-                self.feedback.led_r = 0; self.feedback.led_g = 1; self.feedback.led_b = 0
-            else:
-                self.feedback.led_r = 1; self.feedback.led_g = 0; self.feedback.led_b = 0
+            pos.detected = True
+            pos.x = positions[0]
+            pos.y = positions[1]
+            pos.l = positions[2]
         
-        # set led to blue for remote control
-        else:
-            self.feedback.led_r = 0; self.feedback.led_g = 0; self.feedback.led_b = 1
-
-        self.pub_feedback.publish(self.feedback)
+        self.pub_position.publish(pos)
             
         # convert and pub analysed image 
         object_frame = self.bridge.cv2_to_imgmsg(object_frame, 'bgr8')
         self.pub_detection.publish(object_frame)
 
 
-    def compute_cmd_vel(self, positions):
-
-        """
-        image --> twist
-        x - x
-        y - z
-        z - y ??
-
-        horizontale Abweichung vom Objekt zum Ziel (e_x) resultiert in links - rechts Bewegung der Drohne (y-Achse)
-        vertikaler Error (e_y) resultiert in auf - ab fliegen der Drohne (z-Achse)
-        falsche Entfernung zu Ziel (e_z) resultiert in vor - zurück Bewegung der Drohne
-        """
-
-        e_x = positions[0] - self.goal[0]
-        e_y = positions[1] - self.goal[1]
-        e_z = positions[2] - self.goal[2]
-        
-        p_x = 0.2
-        p_y = 0.2
-        p_z = 0.2 
-
-        cmd_vel = Twist()
-        cmd_vel.linear.x = int(-e_z * p_x)  # x.drohne --> vor und zurück in der ebene; hier wird abstand zum gesicht geregelt
-        cmd_vel.linear.y = int(e_x * p_y) # y.drohne --> links rechts in der ebene; positionierung in der vertikalen achse 
-        cmd_vel.linear.z = int(e_y * p_z) # z.drone --> hoch und runter entland der hochachse
-        #cmd_vel.angular.z = int(msg.angular.z) ??? how to handle this ???
-
-        return cmd_vel
-
 
 if __name__ == '__main__':
 
     filename = sys.argv[0]
     view = sys.argv[1]
+    detector = sys.argv[2]
 
     try:
-        DetectorNode(view)
+        DetectorNode(view, detector)
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
