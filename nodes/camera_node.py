@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import rospy
-from sensor_msgs.msg import Image
 import cv2
+import rospy
 from cv_bridge import CvBridge
-
+from sensor_msgs.msg import Image
 
 class CameraNode(object):
     def __init__(self):
@@ -13,21 +12,28 @@ class CameraNode(object):
         rospy.init_node('camera_node', anonymous=False)
         self.pub = rospy.Publisher('/camera_view', Image, queue_size=1)
 
-        # cv2_bridge
+        # init cv2_bridge
         self.bridge = CvBridge()
 
+        # init video capture (webcam)
         self.cap = cv2.VideoCapture(0)
+        
+        # run video stream publisher
+        self.get_video_stream()
 
-        # run node
+
+    def get_video_stream(self):
+        
         while not rospy.is_shutdown():
-                
+            
             _, frame = self.cap.read()
-            camera_view = self.bridge.cv2_to_imgmsg(frame, 'bgr8')
+            camera_view = cv2.flip(frame, 1) # for selfie view
+            camera_view = self.bridge.cv2_to_imgmsg(camera_view, 'bgr8')
             self.pub.publish(camera_view)
-            rospy.sleep(0.001)
 
         # release cap
         self.cap.release()
+
 
 
 if __name__ == '__main__':

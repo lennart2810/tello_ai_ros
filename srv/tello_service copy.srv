@@ -1,0 +1,19 @@
+# dpad
+bool up
+bool down
+bool left
+bool right
+
+# symbols
+bool cross
+bool circle
+bool triangle
+bool square
+
+# others
+bool options
+bool share
+
+---
+
+string response

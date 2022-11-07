@@ -1,19 +1,5 @@
-# dpad
-bool up
-bool down
-bool left
-bool right
+# tello button service
 
-# symbols
-bool cross
-bool circle
-bool triangle
-bool square
-
-# others
-bool options
-bool share
-
+string request
 ---
-
 string response

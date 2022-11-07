@@ -14,13 +14,30 @@ camera_frame:
   d: 3
 
 # pixel values for goal state
-goal:
+face_goal:
   x: 0
   y: 0
   z: 100
 
 # regions of interest (face_landmarks nose, left_eye, right_eye)
-roi:
+face_roi:
+  nose: 4
+  eye_l: 145
+  eye_r: 374
+
+# pixel values for goal state
+pose_goal:
+  x: 0
+  y: -40
+  l: 100
+
+pose_gain:
+  x: 0.05
+  y: 0.05
+  l: 0.02
+  
+# regions of interest (face_landmarks nose, left_eye, right_eye)
+pose_roi:
   nose: 4
   eye_l: 145
   eye_r: 374

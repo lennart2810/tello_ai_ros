@@ -33,7 +33,7 @@ class FaceDetector():
         # check for facial landsmarks 
         if landmarks is not None:
 
-            face_found = True
+            #face_found = True
 
             # calculate face position (x,y for nose position and z for distance between eyes)
             positions = self.get_face_position(landmarks)
@@ -42,10 +42,10 @@ class FaceDetector():
             frame = self.draw_infos_on_frame(frame, landmarks, positions)
 
         else: 
-            face_found = False
-            positions = (0,0,0)
+            #face_found = False
+            positions = None
 
-        return face_found, frame, positions   
+        return frame, positions   
     
     
     def get_face_landmarks(self, frame):
@@ -140,8 +140,8 @@ def main():
             continue
 
         # get analysed image from FaceDetector
-        face_found, frame, positions = detector.process_view(frame)
-        
+        frame, positions = detector.process_view(frame)
+
         cv2.imshow('FaceDetector', frame)
         
         if cv2.waitKey(5) & 0xFF == 27:

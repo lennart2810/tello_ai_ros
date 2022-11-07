@@ -18,7 +18,7 @@ class DetectorNode(object):
         rospy.init_node('detector_node', anonymous=False)
         rospy.Subscriber('tello_view', Image, self.frame_callback, queue_size=1)
         self.pub_detection = rospy.Publisher('object_detection', Image, queue_size=1)
-        self.pub_position = rospy.Publisher('object_postion', object_position, queue_size=1) 
+        self.pub_position = rospy.Publisher('object_position', object_position, queue_size=1) 
 
         # read frame params from tello.yaml
         if view == 'tello':

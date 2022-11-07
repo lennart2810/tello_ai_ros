@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="view" default="camera" doc="get video stream from 'tello' or 'camera"/>
+
+  <!-- launch camera node in default config -->
+
+
+  
+
+  <group if="$(eval arg('view') == 'camera')">
+
+      <!-- soll später nur bei debug gestartet werden, sonst kommt bild ja von tello!!!! -->
+      <include file="$(find tello_ai_ros)/launch/camera.launch" /> 
+
+      <node pkg="tello_ai_ros" 
+        type="detector_node.py" 
+        name="detector_node" 
+        args="$(arg view) pose"
+        output="screen" >
+        <remap from="/tello_view" to="/camera_view"/>
+        <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+    </node>
+  </group> 
+
+    <group if="$(eval arg('view') == 'tello')">
+      <node pkg="tello_ai_ros" 
+        type="detector_node.py" 
+        name="detector_node" 
+        args="$(arg view) pose"
+        output="screen" >
+        <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+    </node>
+
+    <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/> 
+  </group> 
+
+  <!-- launch detector -->
+
+
+  <!-- run tello controller node -->
+  <node pkg="tello_ai_ros" 
+        type="tello_controller.py" 
+        name="tello_controller" 
+        args="$(arg view) pose"
+        output="screen" >
+        <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+  </node>
+
+  <!-- run tello remote control -->
+  <include file="$(find tello_ai_ros)/launch/tello_rc.launch" /> 
+
+</launch>
