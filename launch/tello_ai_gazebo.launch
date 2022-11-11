@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+  
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch"  > 
+    <arg name="world_name" value="$(find tello_ai_ros)/gazebo/tello_ai.world" />
+  </include>
+
+  <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor_with_cam.launch" />
+  
+  <include file="$(find hector_quadrotor_demo)/hector_aro/launch/status_to_hector.launch" />
+  <!-- ersetzen durch status to tello -->
+  
+  <node pkg="tello_ai_ros" 
+        type="detector_node.py" 
+        name="detector_node" 
+        args="gazebo pose"
+        output="screen" >
+        <remap from="/tello_view" to="/front_cam/camera/image"/>
+        <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+  </node>
+  
+  
+  <!-- 
+    <node pkg="tello_ai_ros" 
+        type="status_to_object.py" 
+        name="status_to_object" 
+        output="screen" >
+        <rosparam command="load" file="$(find tello_ai_ros)/config/status_to_tello.yaml" />
+  </node>
+  -->
+  
+  <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/> 
+
+</launch>

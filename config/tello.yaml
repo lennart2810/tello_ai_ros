@@ -5,6 +5,11 @@ tello_frame:
   w: 720
   h: 960
   d: 3
+  
+gazebo_frame:
+  w: 240
+  h: 320
+  d: 3
 
 # my computer webcam shape
 # if you want to test the face_detector_node via computer webcam
@@ -12,6 +17,8 @@ camera_frame:
   w: 480
   h: 640
   d: 3
+  
+  
 
 # pixel values for goal state
 face_goal:

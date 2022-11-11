@@ -25,6 +25,8 @@ class DetectorNode(object):
             frame_params = rospy.get_param('~tello_frame')
         elif view == 'camera':
             frame_params = rospy.get_param('~camera_frame')
+        elif view == 'gazebo':
+            frame_params = rospy.get_param('~gazebo_frame')
 
         self.frame_shape = (frame_params['w'], frame_params['h'], frame_params['d'])
         rospy.loginfo('Frame Shape: ' + view + str(self.frame_shape))

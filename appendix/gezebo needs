@@ -1,0 +1,7 @@
+roslaunch gazebo_ros empty_world.launch
+
+oslaunch hector_quadrotor_gazebo spawn_quadrotor.launch
+
+roslaunch hector_quadrotor_demo status_to_hector.launch
+
+rqt
