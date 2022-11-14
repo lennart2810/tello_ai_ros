@@ -34,6 +34,9 @@ class TelloControllerNode(object):
         elif detector == 'face':
              goal_params = rospy.get_param('~goal')
              self.goals = (goal_params['x'], goal_params['y'], goal_params['z'])
+        elif detector == 'gazebo':
+             goal_params = rospy.get_param('~pose_goal')
+             self.goals = (goal_params['x'], goal_params['y'], goal_params['z'])
 
 
     def rc_cb(self, msg):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#import sys
+import sys
 import rospy
 from std_msgs.msg import Bool
 from ds4_driver.msg import Status
@@ -9,13 +9,17 @@ from tello_ai_ros.srv import tello_service, tello_serviceRequest, tello_serviceR
 
 
 class StatusToTello(object):
-    def __init__(self):
+    def __init__(self, mode):
 
         rospy.init_node('status_to_tello')
         
         # load params from status_to_tello.yaml file
-        self.inputs = rospy.get_param('~inputs')
-        self.scales = rospy.get_param('~scales')
+        if mode == 'tello':
+            self.inputs = rospy.get_param('~inputs_tello')
+            self.scales = rospy.get_param('~scales_tello')
+        elif mode == 'gazebo':
+            self.inputs = rospy.get_param('~inputs_gazebo')
+            self.scales = rospy.get_param('~scales_gazebo')
 
         self.axis = rospy.get_param('~axis')
         self.axis_attrs = list(self.axis.values())
@@ -98,8 +102,11 @@ class StatusToTello(object):
 
 if __name__ == '__main__':
 
+    filename = sys.argv[0]
+    mode = sys.argv[1]
+
     try:
-        StatusToTello()
+        StatusToTello(mode)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo(" Error ")

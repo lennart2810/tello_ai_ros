@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-
+  
+  <arg name="mode" default="tello" doc="real 'tello' or simulated 'gazebo' drone"/>
+  
   <!-- launch ds4_driver -->
   <include file="$(find ds4_driver)/launch/ds4_driver.launch" /> 
 
@@ -8,6 +10,7 @@
   <node pkg="tello_ai_ros" 
         type="status_to_tello.py" 
         name="status_to_tello" 
+        args="$(arg mode)"
         output="screen" >
         <rosparam command="load" file="$(find tello_ai_ros)/config/status_to_tello.yaml" />
   </node>

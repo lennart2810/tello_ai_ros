@@ -19,7 +19,7 @@ button:
   b9: button_trackpad
   b10: button_share
 
-inputs:
+inputs_tello:
   linear:
     x: axis_left_y
     y: -axis_left_x
@@ -27,10 +27,26 @@ inputs:
   angular:
     z: axis_r2 - axis_l2
     
-scales:
+inputs_gazebo:
+  linear:
+    x: axis_left_y
+    y: axis_left_x
+    z: axis_right_y
+  angular:
+    z: axis_l2 - axis_r2
+    
+scales_tello:
   linear:
     x: 100
     y: 100
     z: 100
   angular:
     z: 100
+    
+scales_gazebo:
+  linear:
+    x: 2
+    y: 2
+    z: 3
+  angular:
+    z: 5

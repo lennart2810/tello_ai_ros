@@ -1,35 +1,36 @@
 <?xml version="1.0"?>
 <launch>
   
+  <arg name="detection" default="pose" doc="detection goal 'pose' or 'face"/>
   
+  <!-- launch tello ai gazebo world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch"  > 
     <arg name="world_name" value="$(find tello_ai_ros)/gazebo/tello_ai.world" />
   </include>
+  
+  <!-- spawn (hector) quadrotor -->
+  <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor.launch" >
+    <arg name="model" value="$(find hector_quadrotor_description)/urdf/quadrotor_hokuyo_utm30lx.gazebo.xacro"/> 
+  </include>
 
-  <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor_with_cam.launch" />
+  <!-- launch tello remote control -->
+  <!-- <include file="$(find hector_quadrotor_demo)/hector_aro/launch/status_to_hector.launch" /> -->
+  <include file="$(find tello_ai_ros)/launch/tello_rc.launch" >
+    <arg name="mode" value="gazebo"/> 
+  </include>
   
-  <include file="$(find hector_quadrotor_demo)/hector_aro/launch/status_to_hector.launch" />
-  <!-- ersetzen durch status to tello -->
+  <!-- launch detector node -->
+  <include file="$(find tello_ai_ros)/launch/detector.launch" >
+    <arg name="view" value="gazebo"/> 
+    <arg name="detection" value="$(arg detection)"/> 
+  </include>
   
-  <node pkg="tello_ai_ros" 
-        type="detector_node.py" 
-        name="detector_node" 
-        args="gazebo pose"
-        output="screen" >
-        <remap from="/tello_view" to="/front_cam/camera/image"/>
-        <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
-  </node>
+  <!-- launch tello controller -->
+  <include file="$(find tello_ai_ros)/launch/tello_controller.launch"  > 
+    <arg name="view" value="gazebo" />
+  </include>
   
-  
-  <!-- 
-    <node pkg="tello_ai_ros" 
-        type="status_to_object.py" 
-        name="status_to_object" 
-        output="screen" >
-        <rosparam command="load" file="$(find tello_ai_ros)/config/status_to_tello.yaml" />
-  </node>
-  -->
-  
-  <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/> 
+  <!-- run rqt image viewer -->
+  <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>
 
 </launch>

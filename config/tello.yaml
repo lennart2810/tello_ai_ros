@@ -7,8 +7,8 @@ tello_frame:
   d: 3
   
 gazebo_frame:
-  w: 240
-  h: 320
+  w: 480
+  h: 640
   d: 3
 
 # my computer webcam shape
@@ -39,9 +39,9 @@ pose_goal:
   l: 100
 
 pose_gain:
-  x: 0.05
-  y: 0.05
-  l: 0.02
+  x: 0.01
+  y: 0.01
+  l: 0.01
   
 # regions of interest (face_landmarks nose, left_eye, right_eye)
 pose_roi:

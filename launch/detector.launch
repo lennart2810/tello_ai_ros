@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="view" default="camera" doc="get video stream from 'tello', 'gazebo' or 'camera"/>
+  <arg name="detection" default="pose" doc="detection goal 'pose' or 'face"/>
+  
+  <!-- launch detector node for 'tello' view -->
+  <group if="$(eval arg('view') == 'tello')">
+    <node pkg="tello_ai_ros" 
+          type="detector_node.py" 
+          name="detector_node" 
+          args="$(arg view) $(arg detection)"
+          output="screen" >
+          <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+    </node>
+  </group> 
+  
+  <!-- launch detector node for 'gazebo' view and remap image topic -->
+  <group if="$(eval arg('view') == 'gazebo')">
+    <node pkg="tello_ai_ros" 
+          type="detector_node.py" 
+          name="detector_node" 
+          args="$(arg view) $(arg detection)"
+          output="screen" >
+          <remap from="/tello_view" to="/front_cam/camera/image"/>
+          <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+    </node>
+  </group> 
+
+  <!-- launch detector and camera node fpr 'camera' view, remap image topic -->
+  <group if="$(eval arg('view') == 'camera')">
+    <include file="$(find tello_ai_ros)/launch/camera.launch" /> 
+    <node pkg="tello_ai_ros" 
+          type="detector_node.py" 
+          name="detector_node" 
+          args="$(arg view) $(arg detection)"
+          output="screen" >
+          <remap from="/tello_view" to="/camera_view"/>
+          <rosparam command="load" file="$(find tello_ai_ros)/config/tello.yaml" />
+    </node>
+  </group> 
+  
+
+
+
+
+  <!-- launch detector -->
+
+
+
+  <!-- <include file="$(find tello_ai_ros)/launch/tello_rc.launch" /> -->
+
+</launch>
