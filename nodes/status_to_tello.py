@@ -15,11 +15,15 @@ class StatusToTello(object):
         
         # load params from status_to_tello.yaml file
         if mode == 'tello':
-            self.inputs = rospy.get_param('~inputs_tello')
-            self.scales = rospy.get_param('~scales_tello')
+            self.params = rospy.get_param('~tello')
         elif mode == 'gazebo':
-            self.inputs = rospy.get_param('~inputs_gazebo')
-            self.scales = rospy.get_param('~scales_gazebo')
+            self.params = rospy.get_param('~gazebo')
+
+        self.inputs = self.params['inputs']
+        self.scales = self.params['scales']
+
+        rospy.logwarn(self.inputs)
+        rospy.logwarn(self.scales)
 
         self.axis = rospy.get_param('~axis')
         self.axis_attrs = list(self.axis.values())

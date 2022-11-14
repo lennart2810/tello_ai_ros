@@ -3,6 +3,7 @@
 import sys
 import rospy
 import numpy as np
+import cv2
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
@@ -48,9 +49,15 @@ class DetectorNode(object):
         # read and reshape image data
         frame = np.frombuffer(msg.data, dtype=np.uint8)
         frame = frame.reshape(self.frame_shape)
+        #rospy.logwarn(frame.shape)
+        gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #rospy.logwarn(gray_image.shape)
+        #frame = frame.reshape(self.frame_shape)
+        #rospy.logwarn(gray_image.shape)
+        #gray_image = gray_image.reshape((480,640,1))
 
         # get analysed image from FaceDetector
-        object_frame, positions = self.detector.process_view(frame) # danger bei face detector noch anpassen!!!
+        gray_image, positions = self.detector.process_view(gray_image) # danger bei face detector noch anpassen!!!
 
         pos = object_position()
         pos.detected = False
@@ -65,8 +72,9 @@ class DetectorNode(object):
         self.pub_position.publish(pos)
             
         # convert and pub analysed image 
-        object_frame = self.bridge.cv2_to_imgmsg(object_frame, 'bgr8')
-        self.pub_detection.publish(object_frame)
+        #object_frame = self.bridge.cv2_to_imgmsg(object_frame, 'bgr8')
+        gray_image = self.bridge.cv2_to_imgmsg(gray_image, 'mono8') 
+        self.pub_detection.publish(gray_image)
 
 
 
